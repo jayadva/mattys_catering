@@ -258,11 +258,11 @@ a:active {
     letter-spacing: -0.32px;
 }
 .btn-additem.btn-additem-locked {
-    cursor: not-allowed;
+    /*cursor: not-allowed;
     pointer-events: none;
     background-color: rgba(1, 63, 66, 0.8) !important;
     border-color: rgba(1, 63, 66, 0.8) !important;
-    color: #fff !important;
+    color: #fff !important;*/
 }
 #mainproductcontainer .btn-additem:active {
     background-color: var(--primary-color);
@@ -1203,7 +1203,23 @@ aside#sidebar h4 {
     direction: rtl; 
 }
 #mattysprodmenumodal .modal-content .productoptions select.left-arrow option {
-    direction: ltr; 
+    direction: ltr;
+}
+#mattysprodmenumodal .modal-content .productoptions .selectwrapper.field-error {
+    border: 2px solid #dc3545;
+    border-radius: 8px;
+}
+#mattysprodmenumodal .modal-content .productoptions .selectwrapper.field-error select {
+    border-color: #dc3545;
+}
+#mattysprodmenumodal .modal-content .productoptions .field-alert {
+    margin: 0px 0 0 0;
+    padding: 0px 0px;
+    font-size: 14px;
+    border-radius: 4px;
+    background: transparent;
+    border-color: transparent;
+    color: red;
 }
 #mattysprodmenumodal .modal-content #productoptionaddons {
     overflow: hidden;
@@ -1847,6 +1863,19 @@ aside#sidebar h4 {
   transform: translateY(-55%);
   pointer-events: none; 
   color: var(--primary-color);
+}
+#mattysprodmenumodal .modal-content .portionitemoptions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+}
+#mattysprodmenumodal .modal-content .portionitemoptions .fieldwrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 /* Desktop View */

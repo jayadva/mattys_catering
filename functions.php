@@ -12,6 +12,7 @@ require get_template_directory() . '/inc/template-tags.php';
 require get_template_directory() . '/inc/template-functions.php';
 require get_template_directory() . '/inc/customizer.php';
 require get_template_directory() . '/inc/shortcodes/productlisting.php';
+require get_template_directory() . '/inc/cpt-orders.php';
 require get_template_directory() . '/inc/emailorder.php';
 
 // ACTION AND FILTER HOOKS

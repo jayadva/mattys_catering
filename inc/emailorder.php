@@ -2,6 +2,11 @@
 add_action('wp_ajax_mattysorderemail', 'mattysorderemail');
 add_action('wp_ajax_nopriv_mattysorderemail', 'mattysorderemail');
 
+// Debug: Log wp_mail failures
+add_action('wp_mail_failed', function($wp_error) {
+    error_log('WP_MAIL ERROR: ' . print_r($wp_error->get_error_message(), true));
+});
+
 function mattysorderemail() {
     if ( ! wp_verify_nonce( $_POST['nonce'], 'mattys-nonce') ) {
         wp_send_json(['success' => false, 'errormessage' => 'Invalid security token.']);
@@ -20,17 +25,42 @@ function mattysorderemail() {
     $dietaryrequirements = sanitize_textarea_field($_POST['dietaryrequirements']);
     $specialrequest = sanitize_textarea_field($_POST['specialrequest']);
     $deliveryAddress = sanitize_text_field($_POST['deliveryAddress']);
-    
+    $totalamount = sanitize_text_field($_POST['totalamount']);
+
     // Handle beverage add-ons array
     $beverageaddons = '';
     if (isset($_POST['beverageaddons']) && is_array($_POST['beverageaddons'])) {
         $beverageaddons = implode(', ', array_map('sanitize_text_field', $_POST['beverageaddons']));
     }
-    
+
     // Handle cart items (JSON string from localStorage)
     $cartitems = [];
     if (isset($_POST['cartitems']) && !empty($_POST['cartitems'])) {
         $cartitems = json_decode(stripslashes($_POST['cartitems']), true);
+    }
+
+    // Save order to custom post type
+    $order_data = array(
+        'fullname'             => $fullname,
+        'phonenumber'          => $phonenumber,
+        'emailaddress'         => $emailaddress,
+        'companyorganization'  => $companyorganization,
+        'totalpeoplecatering'  => $totalpeoplecatering,
+        'deliverydate'         => $deliverydate,
+        'deliverytime'         => $deliverytime,
+        'pickupdelivery'       => $pickupdelivery,
+        'deliveryaddress'      => $deliveryAddress,
+        'dietaryrequirements'  => $dietaryrequirements,
+        'specialrequest'       => $specialrequest,
+        'totalamount'          => $totalamount,
+        'cartitems'            => $cartitems,
+    );
+
+    $order_id = mattys_save_order( $order_data );
+    $order_number = '';
+
+    if ( ! is_wp_error( $order_id ) ) {
+        $order_number = get_post_meta( $order_id, '_order_number', true );
     }
 
     // Build cart items HTML
@@ -220,9 +250,9 @@ function mattysorderemail() {
     </html>';
 
     // Email settings
-    // $to = array(get_option('admin_email'), 'xuan.lee@adva.group'); // Send to admin email, you can change this
-    $to = array(get_option('admin_email'), 'jayson.albano+123@adva.group'); 
-    $subject = 'New Catering Order from ' . $fullname;
+    $to = array(get_option('admin_email'), 'xuan.lee@adva.group'); // Send to admin email, you can change this
+    //$to = array(get_option('admin_email'), 'jayson.albano+123@adva.group');
+    $subject = $order_number ? 'New Catering Order #' . $order_number . ' from ' . $fullname : 'New Catering Order from ' . $fullname;
     $headers = array(
         'Content-Type: text/html; charset=UTF-8',
         'From: Matty\'s Sandwiches <' . get_option('admin_email') . '>',
@@ -232,14 +262,24 @@ function mattysorderemail() {
     // Send the email
     $sent = wp_mail($to, $subject, $emailbody, $headers);
 
+    // Debug logging
+    error_log('=== MATTYS ORDER EMAIL DEBUG ===');
+    error_log('Admin email sent to: ' . implode(', ', $to));
+    error_log('Admin email result: ' . ($sent ? 'SUCCESS' : 'FAILED'));
+
     // Also send confirmation to customer
-    $customer_subject = 'Your Catering Order Confirmation - Matty\'s Sandwiches';
+    $customer_subject = $order_number ? 'Your Catering Order #' . $order_number . ' Confirmation - Matty\'s Sandwiches' : 'Your Catering Order Confirmation - Matty\'s Sandwiches';
     $customer_headers = array(
         'Content-Type: text/html; charset=UTF-8',
         'From: Matty\'s Sandwiches <' . get_option('admin_email') . '>'
     );
     
     $customer_sent = wp_mail($emailaddress, $customer_subject, $emailbody, $customer_headers);
+
+    // Debug logging for customer email
+    error_log('Customer email sent to: ' . $emailaddress);
+    error_log('Customer email result: ' . ($customer_sent ? 'SUCCESS' : 'FAILED'));
+    error_log('=== END MATTYS ORDER EMAIL DEBUG ===');
 
     if ($sent) {
         wp_send_json([

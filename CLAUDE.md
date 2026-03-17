@@ -21,7 +21,8 @@ mattys/
 │   ├── template-tags.php        # Reusable template functions
 │   ├── template-functions.php   # Body classes, pingback headers
 │   ├── customizer.php           # WordPress customizer settings
-│   ├── emailorder.php           # AJAX order email handler
+│   ├── cpt-orders.php           # Orders custom post type & admin UI
+│   ├── emailorder.php           # AJAX order email handler & save
 │   ├── jetpack.php              # Jetpack plugin support
 │   └── shortcodes/
 │       └── productlisting.php   # Product grid shortcode & modal AJAX
@@ -60,18 +61,24 @@ mattys/
 |------|---------|-------|
 | `inc/shortcodes/productlisting.php` | Product shortcode & AJAX modal | 545 |
 | `assets/js/main.js` | Cart, validation, order submission | 789 |
-| `inc/emailorder.php` | Order email processing | ~150 |
+| `inc/cpt-orders.php` | Orders CPT, meta boxes, admin UI | ~450 |
+| `inc/emailorder.php` | Order email processing & save | ~270 |
 | `template-parts/content-cart.php` | Main order form template | ~200 |
 | `style.css` | Primary styles + theme metadata | 2000+ |
 
 ---
 
-## Custom Post Type & Taxonomy
+## Custom Post Types & Taxonomy
 
-The theme relies on a **custom plugin** that creates:
-
+### Menu Products (Plugin-provided)
 - **Post Type:** `menuproduct` - Menu items (sandwiches, drinks)
 - **Taxonomy:** `menuproduct_category` - Product categories
+
+### Orders (Theme-provided)
+- **Post Type:** `mattys_order` - Customer catering orders
+- **File:** `inc/cpt-orders.php`
+- **Custom Statuses:** `order-pending`, `order-confirmed`, `order-completed`, `order-cancelled`
+- **Order Number Format:** `MTY` + `YYYYMMDD` + `XXX` (e.g., MTY20260315001)
 
 ---
 
@@ -89,6 +96,26 @@ Products use these ACF fields:
 | `modify_addon_sandwich_list` | Repeater | Add-ons with prices |
 | `add_on_drinks` | Boolean | Indicates drink add-ons available |
 | `popular` | Boolean | Shows "popular" badge |
+
+### Order Meta Fields (mattys_order)
+
+| Meta Key | Type | Purpose |
+|----------|------|---------|
+| `_order_number` | String | Unique order identifier (MTY format) |
+| `_order_date` | DateTime | Order submission timestamp |
+| `_customer_fullname` | String | Customer full name |
+| `_customer_phone` | String | Customer phone number |
+| `_customer_email` | String | Customer email address |
+| `_customer_company` | String | Company/organization name |
+| `_total_people` | String | Number of people catering for |
+| `_delivery_date` | String | Requested delivery date |
+| `_delivery_time` | String | Requested delivery time |
+| `_pickup_delivery` | String | "pickup" or "delivery" |
+| `_delivery_address` | String | Delivery address (if applicable) |
+| `_dietary_requirements` | Text | Dietary requirements notes |
+| `_special_request` | Text | Special request notes |
+| `_order_total` | String | Order total amount |
+| `_order_items` | JSON | Cart items array (JSON encoded) |
 
 ---
 
@@ -149,7 +176,7 @@ Displays product grid with add-to-cart functionality.
 4. **Delivery Time Logic**
    - 30-minute intervals
    - 3-hour lead time enforcement
-   - Operating hours: 12:00 PM - 10:00 PM
+   - Operating hours: 8:00 AM - 4:00 PM
    - Auto-adjusts to next available slot
 
 5. **Order Submission**
@@ -219,8 +246,10 @@ composer make-pot      # Generate translation file
 3. Select options, quantity → Click "ADD ITEM"
 4. JavaScript saves to localStorage → Cart sidebar updates
 5. Fill order form → Click "SUBMIT ENQUIRY"
-6. AJAX sends to mattysorderemail → Server validates & emails
-7. Success → Cart cleared, confirmation shown
+6. AJAX sends to mattysorderemail → Server validates
+7. Order saved to mattys_order CPT → Order number generated
+8. Confirmation emails sent to admin + customer
+9. Success → Cart cleared, confirmation shown
 ```
 
 ---
@@ -301,6 +330,42 @@ composer make-pot      # Generate translation file
 | Cart functionality | `assets/js/main.js` |
 | Order form | `template-parts/content-cart.php` |
 | Email content | `inc/emailorder.php` |
+| Order CPT & admin | `inc/cpt-orders.php` |
+| Order meta fields | `inc/cpt-orders.php`, `inc/emailorder.php` |
 | Styles | `style.css`, `assets/css/styles.css` |
 | Scripts loading | `inc/enqueue.php` |
 | Theme setup | `inc/init.php` |
+
+---
+
+## Session Tracking
+
+This project uses a session tracking system for continuity between Claude Code sessions.
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `SESSION_LOG.md` | Detailed session history with what was done |
+| `TASKS.md` | In-progress and pending task tracker |
+| `CLAUDE.md` | This file - includes recent sessions summary below |
+
+### Workflow
+
+**Starting a session:**
+1. Claude reads `SESSION_LOG.md` for recent context
+2. Claude checks `TASKS.md` for pending work
+3. Claude reviews "Recent Sessions" below
+
+**Ending a session:**
+Ask Claude: "Update the session files before we end"
+
+---
+
+## Recent Sessions
+
+| Date | Focus | Key Changes |
+|------|-------|-------------|
+| 2026-03-16 | Project setup | Created CLAUDE.md, session tracking system |
+
+_Last 5 sessions shown. See SESSION_LOG.md for full history._

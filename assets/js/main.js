@@ -194,26 +194,33 @@ jQuery( document ).ready(function() {
     });
 
     // Populate delivery time picker with 30-min intervals, disabling unavailable times
+    // Operating hours: 8:00 AM - 4:00 PM, 3-hour prep time required
     if (jQuery('#deliverytime').length) {
-        var lastPickupMins = 22 * 60; // 10:00 PM
+        var openingMins = 8 * 60;      // 8:00 AM
+        var lastPickupMins = 16 * 60;  // 4:00 PM
+        var leadTimeHours = 3;
         var now = new Date();
         var todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         jQuery('#deliverydate').attr('min', todayStr);
-        var currentHour = now.getHours();
+
+        // Calculate current time in minutes
+        var currentMins = now.getHours() * 60 + now.getMinutes();
+        // Add 3-hour lead time
+        var earliestMins = currentMins + (leadTimeHours * 60);
+        // Round up to next 30-minute slot
+        earliestMins = Math.ceil(earliestMins / 30) * 30;
+
         var minTotalMins;
 
-        if (currentHour < 9) {
-            // Before 9 AM: earliest is 12:00 PM same day
-            minTotalMins = 12 * 60;
+        if (earliestMins < openingMins) {
+            // If earliest time is before opening, set to opening time
+            minTotalMins = openingMins;
+        } else if (earliestMins <= lastPickupMins) {
+            // Within operating hours
+            minTotalMins = earliestMins;
         } else {
-            // 9 AM or later: current time + 3 hour lead time
-            var minDate = new Date(now.getTime() + 3 * 60 * 60 * 1000);
-            minTotalMins = minDate.getHours() * 60 + minDate.getMinutes();
-        }
-
-        // If lead time pushes past last pickup (10 PM), roll over to next day at 12 PM
-        if (minTotalMins > lastPickupMins) {
-            minTotalMins = 12 * 60;
+            // Past closing time - roll over to next day at opening
+            minTotalMins = openingMins;
             var tomorrow = new Date(now);
             tomorrow.setDate(tomorrow.getDate() + 1);
             var yyyy = tomorrow.getFullYear();
@@ -224,8 +231,8 @@ jQuery( document ).ready(function() {
         }
 
         var $select = jQuery('#deliverytime');
-        // Generate options from 8:00 AM to 10:00 PM in 30-min intervals
-        for (var totalMins = 12 * 60; totalMins <= lastPickupMins; totalMins += 30) {
+        // Generate options from 8:00 AM to 4:00 PM in 30-min intervals
+        for (var totalMins = openingMins; totalMins <= lastPickupMins; totalMins += 30) {
             var h = Math.floor(totalMins / 60);
             var m = totalMins % 60;
             var period = h >= 12 ? 'PM' : 'AM';
@@ -309,12 +316,20 @@ jQuery( document ).ready(function() {
             var hasError = false;
             var $portionSizeField = jQuery('#productcartform #portion_size');
             if ($portionSizeField.is('select') && !portion_size) {
-                $portionSizeField.closest('.productoptions').find('.selectwrapper').addClass('field-error');
+                var $portionOptions = $portionSizeField.closest('.productoptions');
+                $portionOptions.find('.selectwrapper').addClass('field-error');
+                if (!$portionOptions.find('.field-alert').length) {
+                    $portionOptions.find('.fieldwrapper').before('<div class="field-alert alert alert-danger">Please select a portion size</div>');
+                }
                 hasError = true;
             }
             var $cutPrefField = jQuery('#productcartform #cut_preference');
             if ($cutPrefField.length && !cut_preference) {
-                $cutPrefField.closest('.productoptions').find('.selectwrapper').addClass('field-error');
+                var $cutOptions = $cutPrefField.closest('.productoptions');
+                $cutOptions.find('.selectwrapper').addClass('field-error');
+                if (!$cutOptions.find('.field-alert').length) {
+                    $cutOptions.find('.fieldwrapper').before('<div class="field-alert alert alert-danger">Please select a cut preference</div>');
+                }
                 hasError = true;
             }
             if (hasError) { return false; }
@@ -454,6 +469,7 @@ jQuery( document ).ready(function() {
                 isValid = false;
             } else {
                 $portionSize.closest('.productoptions').find('.selectwrapper').removeClass('field-error');
+                $portionSize.closest('.productoptions').find('.field-alert').remove();
             }
         }
         var $cutPref = jQuery('#productcartform #cut_preference');
@@ -462,10 +478,12 @@ jQuery( document ).ready(function() {
                 isValid = false;
             } else {
                 $cutPref.closest('.productoptions').find('.selectwrapper').removeClass('field-error');
+                $cutPref.closest('.productoptions').find('.field-alert').remove();
             }
         }
         jQuery('.btn-additem').toggleClass('btn-additem-locked', !isValid);
     }
+
     function removedItem() {
         jQuery(document).off('click.removeitem', '.removeitem-btn').on('click.removeitem', '.removeitem-btn', function() {
             let productmenuid = jQuery(this).data('productmenuid');

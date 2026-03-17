@@ -332,19 +332,21 @@ function productmenumodal () {
             // Choose portion size
             if( $totale_portion_size > 1 ) {
                 if($choose_portion_size) {
-                    $display .= '<div class="productoptions">';
-                    $display .= '	<label for="portion-size">Choose portion size</label>';
-                    $display .= '   <div class="selectwrapper">';
-                    $display .= '   <select name="portion_size" id="portion_size">';
-                    $display .= '   <option value="">Select</option>';
+                    $display .= '<div class="productoptions portionitemoptions">';
+                    $display .= '   <div class="fieldwrapper">';
+                    $display .= '	    <label for="portion-size">Choose portion size</label>';
+                    $display .= '       <div class="selectwrapper">';
+                    $display .= '       <select name="portion_size" id="portion_size">';
+                    $display .= '           <option value="">Select</option>';
                     foreach($choose_portion_size as $portion) {
                         if ($portion['price']) {
                             $portionPrice = ' ('.$portion['price'].')';
                         }
-                        $display .= '   <option value="'.$portion['portion_size'].'" data-price="'.$portion['price'].'">'.$portion['portion_size'].'</option>';
+                        $display .= '       <option value="'.$portion['portion_size'].'" data-price="'.$portion['price'].'">'.$portion['portion_size'].'</option>';
                     }
-                    $display .= '   </select>';   
-                    $display .= '   </div>';    
+                    $display .= '       </select>';   
+                    $display .= '       </div>';    
+                    $display .= '   </div>';               
                     $display .= '</div>';               
                 }
             } else {
@@ -359,15 +361,17 @@ function productmenumodal () {
             // Choose portion size
             $choose_cut_preferences = get_field('choose_cut_preference');
             if($choose_cut_preferences) {
-                $display .= '<div class="productoptions">';
-                $display .= '	<label for="cut_preference">Choose Cut Preference</label>';
-                $display .= '   <div class="selectwrapper">';
-                $display .= '   <select name="cut_preference" id="cut_preference">';
-                $display .= '   <option value="">Select</option>';
+                $display .= '<div class="productoptions portionitemoptions">';
+                $display .= '   <div class="fieldwrapper">';
+                $display .= '	    <label for="cut_preference">Choose Cut Preference</label>';
+                $display .= '       <div class="selectwrapper">';
+                $display .= '       <select name="cut_preference" id="cut_preference">';
+                $display .= '           <option value="">Select</option>';
                 foreach($choose_cut_preferences as $choosecutpreference) {
-                    $display .= '   <option value="'.$choosecutpreference['cut_preference'].'">'.$choosecutpreference['cut_preference'].'</option>';
+                    $display .= '       <option value="'.$choosecutpreference['cut_preference'].'">'.$choosecutpreference['cut_preference'].'</option>';
                 }
-                $display .= '   </select>';
+                $display .= '       </select>';
+                $display .= '       </div>';
                 $display .= '   </div>';
                 $display .= '</div>';
             }
